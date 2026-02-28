@@ -3,18 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>José Félix's - Creative Technologist & Design Engineer</title>
+  <title>José Félix - Creative Technologist & Design Engineer</title>
+
+  <style>
+      * {
+          margin: 0;
+          padding: 0;
+      }
+
+      *, *:after, *:before  {
+          box-sizing: border-box;
+          user-select: none;
+      }
+
+      html,
+      body {
+          overflow: hidden;
+      }
+
+      body {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          gap: 1rem;
+
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          top: 0;
+          left: 0;
+      }
+  </style>
 </head>
 <body>
+  <h1>List</h1>
   <ul>
     <li>
-      <a href="#">Project 1</a>
+      <a href="01-galaxy-generator">01 Galaxy Generator</a>
     </li>
     <li>
-      <a href="#">Project 2</a>
-    </li>
-    <li>
-      <a href="#">Project 3</a>
+      <a href="02-auto-scroll-gallery">02 Auto Scroll Gallery</a>
     </li>
   </ul>
 </body>
