@@ -35,6 +35,8 @@ const fragment = `
     precision highp float;
 
     uniform vec2 uMouse;
+    uniform float uBulge;
+    uniform float uStrength;
     uniform sampler2D uTexture;
     varying vec2 vUv;
     
@@ -46,7 +48,7 @@ const fragment = `
     
       float dist = length(uv) / radius; // distance from UVs
       float distPow = pow(dist, 2.); // exponential
-      float strengthAmount = strength / (1.0 + distPow); // Invert bulge and add a minimum of 1)
+      float strengthAmount = uStrength / (1.0 + distPow); // Invert bulge and add a minimum of 1)
       uv *= strengthAmount;
     
       uv += center;
@@ -56,7 +58,7 @@ const fragment = `
     
     void main() {
       vec2 center = vec2(0.5, 0.5);
-      vec2 bulgeUV = bulge(vUv, uMouse);
+      vec2 bulgeUV = mix(vUv, bulge(vUv, uMouse), uBulge);
       vec4 tex = texture2D(uTexture, bulgeUV);
       gl_FragColor.rgb = tex.rgb;
       gl_FragColor.a = 1.0;
@@ -67,13 +69,16 @@ class Scene {
     #renderer
     #mesh
     #program
+    #canvasEl
+    #sizes = {}
     #mouse = new Vec2(0, 0)
     #canMove = true
     #guiObj = {
         offset: 1,
+        strength: 1.2,
     }
     constructor() {
-        // this.setGUI()
+        this.setGUI()
         this.setScene()
         this.events()
     }
@@ -85,12 +90,18 @@ class Scene {
             this.#program.uniforms.uOffset.value = value
         }
 
-        gui.add(this.#guiObj, 'offset', 0.5, 4).onChange(handleChange)
+        /*gui.add(this.#guiObj, 'offset', 0.5, 4).onChange(handleChange)*/
+        gui.add(this.#guiObj, 'strength').min(0.5).max(2).step(0.01).onChange(value => {
+            if (!this.#program) return
+            this.#program.uniforms.uStrength.value = value
+        })
     }
 
     async setScene() {
-        const canvasEl = document.querySelector('.canvas')
-        this.#renderer = new Renderer({ dpr: Math.min(window.devicePixelRatio, 2), canvas: canvasEl })
+        this.#sizes.width = document.querySelector('.positionCanvas').getBoundingClientRect().width
+        this.#sizes.height = document.querySelector('.positionCanvas').getBoundingClientRect().height
+        this.#canvasEl = document.querySelector('.canvas')
+        this.#renderer = new Renderer({ dpr: Math.min(window.devicePixelRatio, 2), canvas: this.#canvasEl })
         const gl = this.#renderer.gl
         gl.clearColor(1, 1, 1, 1)
 
@@ -122,7 +133,7 @@ class Scene {
                 image.src = url
             })
 
-        const texture = await loadTexture('./img/image-2.jpg')
+        const texture = await loadTexture('./img/image.jpg')
 
         this.#program = new Program(gl, {
             vertex,
@@ -133,6 +144,8 @@ class Scene {
                 uTextureResolution: { value: new Vec2(texture.image.width, texture.image.height) },
                 uResolution: { value: new Vec2(gl.canvas.offsetWidth, gl.canvas.offsetHeight) },
                 uMouse: { value: new Vec2(0.5, 0.5) },
+                uBulge: { value: 0 },
+                uStrength: { value: this.#guiObj.strength },
             },
         })
 
@@ -141,16 +154,18 @@ class Scene {
 
     events() {
         window.addEventListener('resize', this.handleResize.bind(this), false)
-        window.addEventListener('mousemove', this.handleMouseMove.bind(this), false)
-        window.addEventListener('mouseenter', this.handleMouseEnter.bind(this), false)
-        window.addEventListener('mouseleave', this.handleMouseLeave.bind(this), false)
+        document.querySelector('.positionCanvas').addEventListener('mousemove', this.handleMouseMove.bind(this), false)
+        document.querySelector('.positionCanvas').addEventListener('mouseenter', this.handleMouseEnter.bind(this), false)
+        document.querySelector('.positionCanvas').addEventListener('mouseleave', this.handleMouseLeave.bind(this), false)
 
         requestAnimationFrame(this.handleRAF)
     }
 
     handleMouseMove = (e) => {
-        const x = e.clientX / window.innerWidth
-        const y = 1 - e.clientY / window.innerHeight
+        const rect = this.#canvasEl.getBoundingClientRect()
+
+        const x = (e.clientX - rect.left) / rect.width
+        const y = 1 - (e.clientY - rect.top) / rect.height
 
         this.#mouse.x = x
         this.#mouse.y = y
@@ -163,7 +178,7 @@ class Scene {
         if (!this.#canMove) return
         this.tlHide?.kill()
         this.tlShow?.kill()
-        // this.tlLeave?.kill()
+        this.tlLeave?.kill()
         this.tlForceIntro = new gsap.timeline()
         this.tlForceIntro.to(this.#program.uniforms.uIntro, { value: 1, duration: 5, ease: 'expo.out' })
         gsap.to(this.#program.uniforms.uBulge, { value: 1, duration: 1, ease: 'expo.out' })
@@ -173,14 +188,19 @@ class Scene {
         if (!this.#canMove) return
         this.tlForceIntro?.kill()
         this.tlLeave = new gsap.timeline()
-        this.tlLeave.to(this.#program.uniforms.uBulge, { value: 0, duration: 1, ease: 'expo.out' })
+        this.tlLeave
+            .to(this.#program.uniforms.uBulge, { value: 0, duration: 1, ease: 'expo.out' }, 0)
+            .to(this.#mouse, { x: 0.5, y: 0.5, duration: 1, ease: 'expo.out' }, 0)
     }
 
     handleResize = () => {
-        this.#renderer.setSize(window.innerWidth, window.innerHeight)
+        this.#renderer.setSize(this.#sizes.width, this.#sizes.height)
+
+        this.#sizes.width = document.querySelector('.positionCanvas').getBoundingClientRect().width
+        this.#sizes.height = document.querySelector('.positionCanvas').getBoundingClientRect().height
 
         if (this.#program) {
-            this.#program.uniforms.uResolution.value = new Vec2(window.innerWidth, window.innerHeight)
+            this.#program.uniforms.uResolution.value = new Vec2(this.#sizes.width, this.#sizes.height)
         }
     }
 

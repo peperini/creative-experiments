@@ -1,0 +1,55 @@
+html {
+    box-sizing: border-box;
+    overflow: hidden;
+    font-size: calc(10px + 2vmin);
+
+    &.scroll {
+        overflow: visible;
+    }
+}
+
+*,
+::before,
+::after {
+    box-sizing: inherit;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: white;
+    color: white;
+    line-height: 1.3;
+    position: relative;
+    font-family: 'Roboto Slab', serif;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+main {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    border-radius: 1.5rem;
+}
+
+.positionCanvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20rem;
+    height: 90vh;
+
+    @media (max-width: 1250px) {
+
+    }
+}
