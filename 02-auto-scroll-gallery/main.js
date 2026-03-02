@@ -41,9 +41,16 @@ class App {
 
         this.gl = this.renderer.gl
         this.gl.clearColor(0, 0, 0, 0)
-        this.gl.canvas.style.background = 'transparent'
 
         document.body.appendChild(this.gl.canvas)
+        Object.assign(this.gl.canvas.style, {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+        })
+
     }
 
     createCamera() {
@@ -112,8 +119,8 @@ class App {
 
     onResize () {
         this.screen = {
-            height: window.innerHeight,
-            width: window.innerWidth
+            height: document.querySelector('.demo__gallery').clientHeight,
+            width: document.querySelector('.demo__gallery').clientWidth
         }
 
         this.renderer.setSize(this.screen.width, this.screen.height)
